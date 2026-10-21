@@ -21,7 +21,7 @@ ENV/
 .idea/
 .DS_Store
 Thumbs.db
-
 # Databases / Checkpoints
 *.sqlite3
 *.db
+  
