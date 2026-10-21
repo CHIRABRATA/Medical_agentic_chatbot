@@ -1,1 +1,166 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MedGuide AI</title><link rel="stylesheet" href="/static/style.css"></head><body><main class="app"><header><div><h1>✚ MedGuide AI</h1><p>Medical education • Knowledge base + web research</p></div><span id="status">Checking...</span></header><div class="notice">Educational guidance only. Not a diagnosis. For severe symptoms, contact emergency services.</div><section id="messages" aria-live="polite"><article class="bot">Hello! Ask a medical question, upload an image, or use the microphone. I'll cite available sources and explain uncertainty.</article></section><div id="preview" hidden><img id="thumbnail" alt="Selected image"><button id="remove" type="button">Remove image ×</button></div><form id="chatForm"><textarea id="message" placeholder="Describe your symptoms or ask a question..." rows="2" required maxlength="4000"></textarea><div class="toolbar"><label class="action" for="image">📎 Image</label><input id="image" type="file" accept="image/png,image/jpeg,image/webp" hidden><button class="action" id="camera" type="button">📷 Camera</button><button class="action" id="mic" type="button">🎤 Voice</button><button class="action" id="listen" type="button">🔊 Read answer</button><button id="send" type="submit">Send ➜</button></div></form><details><summary>API access (optional)</summary><input id="token" type="password" placeholder="API_TOKEN from .env"></details><video id="video" autoplay playsinline hidden></video><div id="cameraActions" hidden><button id="snap" type="button">Capture</button><button id="closeCamera" type="button">Close camera</button></div><canvas id="canvas" hidden></canvas></main><script src="/static/app.js"></script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MedGuide AI — Intelligent Clinical Knowledge & Triage</title>
+  <meta name="description" content="AI-assisted medical education and symptom triage chatbot powered by vector search and web clinical research.">
+
+  <!-- Google Fonts for Modern Medical Aesthetics -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Primary Stylesheet (with auto-detection for local file:// preview) -->
+  <link id="stylesheet" rel="stylesheet" href="/static/style.css">
+  <script>
+    if (window.location.protocol === 'file:') {
+      document.getElementById('stylesheet').href = '../static/style.css';
+    }
+  </script>
+</head>
+<body>
+  <div class="background-decorations" aria-hidden="true">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+  </div>
+
+  <main class="app" id="app">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="logo-badge">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2v20M2 12h20M7 7l10 10M17 7L7 17" opacity="0.3"/>
+            <path d="M12 4v16M4 12h16"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="app-title">MedGuide AI</h1>
+          <p class="app-subtitle">Clinical Knowledge Base • Web Guidance • Visual Triage</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <span id="status" class="status-badge checking">
+          <span class="pulse-dot"></span>
+          <span class="status-label">Checking...</span>
+        </span>
+      </div>
+    </header>
+
+    <!-- Medical Disclaimer Notice -->
+    <aside class="notice" role="alert">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="notice-icon">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+      <span><strong>Educational Notice:</strong> Guidance only, not a formal medical diagnosis. For severe or emergency symptoms, contact <strong>911 / emergency services</strong> immediately.</span>
+    </aside>
+
+    <!-- Chat Messages Stream -->
+    <section id="messages" class="messages-container" aria-live="polite">
+      <article class="bot">
+        <div class="message-sender">
+          <span class="bot-avatar">✚</span>
+          <strong>MedGuide AI Assistant</strong>
+        </div>
+        <div class="message-text">Hello! Ask any medical question, share symptoms, upload an image for visual observation, or use the voice recorder. I will cross-reference the clinical knowledge base and verified guidance while citing sources.</div>
+      </article>
+    </section>
+
+    <!-- Image Upload Preview Bar -->
+    <div id="preview" class="image-preview-panel" hidden>
+      <div class="preview-thumbnail-wrapper">
+        <img id="thumbnail" alt="Selected medical image preview">
+      </div>
+      <div class="preview-details">
+        <span class="preview-title">Image attached for analysis</span>
+        <button id="remove" type="button" class="btn-remove">Remove image &times;</button>
+      </div>
+    </div>
+
+    <!-- Live Camera Container -->
+    <div class="camera-wrapper">
+      <video id="video" autoplay playsinline hidden></video>
+      <div id="cameraActions" class="camera-actions" hidden>
+        <button id="snap" type="button" class="btn-primary">📸 Capture Photo</button>
+        <button id="closeCamera" type="button" class="btn-secondary">Close Camera</button>
+      </div>
+      <canvas id="canvas" hidden></canvas>
+    </div>
+
+    <!-- Input Form & Interactive Toolbar -->
+    <form id="chatForm" class="chat-form">
+      <div class="input-wrapper">
+        <textarea id="message" placeholder="Describe your symptoms or ask a health question..." rows="2" required maxlength="4000"></textarea>
+      </div>
+
+      <div class="toolbar">
+        <div class="toolbar-group">
+          <label class="action btn-tool" for="image" title="Attach an image">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+            </svg>
+            <span>Image</span>
+          </label>
+          <input id="image" type="file" accept="image/png,image/jpeg,image/webp" hidden>
+
+          <button class="action btn-tool" id="camera" type="button" title="Capture from camera">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+              <circle cx="12" cy="13" r="4"/>
+            </svg>
+            <span>Camera</span>
+          </button>
+
+          <button class="action btn-tool" id="mic" type="button" title="Record voice query">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+              <line x1="12" y1="19" x2="12" y2="23"/>
+              <line x1="8" y1="23" x2="16" y2="23"/>
+            </svg>
+            <span>Voice</span>
+          </button>
+
+          <button class="action btn-tool" id="listen" type="button" title="Read answer out loud">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+              <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+            </svg>
+            <span>Read Answer</span>
+          </button>
+        </div>
+
+        <button id="send" type="submit" class="btn-send">
+          <span>Send</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"/>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+        </button>
+      </div>
+    </form>
+
+    <!-- Optional API Configuration Details -->
+    <details class="api-token-accordion">
+      <summary>
+        <span>Security &amp; API Options (optional)</span>
+      </summary>
+      <div class="api-token-body">
+        <label for="token">Bearer API Token:</label>
+        <input id="token" type="password" placeholder="Enter API_TOKEN if protected in .env">
+      </div>
+    </details>
+  </main>
+
+  <!-- Client JavaScript Application -->
+  <script id="app-script" src="/static/app.js"></script>
+  <script>
+    if (window.location.protocol === 'file:') {
+      document.getElementById('app-script').src = '../static/app.js';
+    }
+  </script>
+</body>
+</html>
