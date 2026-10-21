@@ -3,164 +3,107 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>MedGuide AI — Intelligent Clinical Knowledge & Triage</title>
-  <meta name="description" content="AI-assisted medical education and symptom triage chatbot powered by vector search and web clinical research.">
-
-  <!-- Google Fonts for Modern Medical Aesthetics -->
+  <title>MedGuide AI — Clinical Knowledge Assistant</title>
+  <meta name="description" content="AI-powered medical education and symptom triage chatbot with vector search and web clinical research.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-
-  <!-- Primary Stylesheet (with auto-detection for local file:// preview) -->
-  <link id="stylesheet" rel="stylesheet" href="/static/style.css">
-  <script>
-    if (window.location.protocol === 'file:') {
-      document.getElementById('stylesheet').href = '../static/style.css';
-    }
-  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-  <div class="background-decorations" aria-hidden="true">
-    <div class="blob blob-1"></div>
-    <div class="blob blob-2"></div>
+
+  <!-- Ambient background -->
+  <div class="bg-effects" aria-hidden="true">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
   </div>
 
-  <main class="app" id="app">
-    <!-- Header -->
-    <header class="app-header">
-      <div class="brand">
-        <div class="logo-badge">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 2v20M2 12h20M7 7l10 10M17 7L7 17" opacity="0.3"/>
-            <path d="M12 4v16M4 12h16"/>
-          </svg>
+  <main class="shell">
+    <!-- ── Header ── -->
+    <header class="header">
+      <div class="header-left">
+        <div class="logo">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
         </div>
         <div>
-          <h1 class="app-title">MedGuide AI</h1>
-          <p class="app-subtitle">Clinical Knowledge Base • Web Guidance • Visual Triage</p>
+          <h1>MedGuide AI</h1>
+          <p class="tagline">Knowledge Base · Web Research · Visual Triage</p>
         </div>
       </div>
-      <div class="header-actions">
-        <span id="status" class="status-badge checking">
-          <span class="pulse-dot"></span>
-          <span class="status-label">Checking...</span>
-        </span>
-      </div>
+      <span id="status" class="badge">
+        <span class="dot"></span>
+        <span class="badge-text">Connecting…</span>
+      </span>
     </header>
 
-    <!-- Medical Disclaimer Notice -->
-    <aside class="notice" role="alert">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="notice-icon">
-        <circle cx="12" cy="12" r="10"></circle>
-        <line x1="12" y1="8" x2="12" y2="12"></line>
-        <line x1="12" y1="16" x2="12.01" y2="16"></line>
-      </svg>
-      <span><strong>Educational Notice:</strong> Guidance only, not a formal medical diagnosis. For severe or emergency symptoms, contact <strong>911 / emergency services</strong> immediately.</span>
-    </aside>
+    <!-- ── Disclaimer ── -->
+    <div class="disclaimer">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+      <span><strong>Educational only</strong> — not a diagnosis. For emergencies call <strong>911</strong>.</span>
+    </div>
 
-    <!-- Chat Messages Stream -->
-    <section id="messages" class="messages-container" aria-live="polite">
-      <article class="bot">
-        <div class="message-sender">
-          <span class="bot-avatar">✚</span>
-          <strong>MedGuide AI Assistant</strong>
+    <!-- ── Chat Area ── -->
+    <section id="messages" class="chat">
+      <div class="msg msg-bot">
+        <div class="msg-avatar">✚</div>
+        <div class="msg-body">
+          <div class="msg-name">MedGuide AI</div>
+          <div class="msg-text">Welcome! Ask any medical or health question. I'll search the clinical knowledge base and verified sources, then cite my references.<br><br>You can also <strong>upload an image</strong>, use the <strong>camera</strong>, or record a <strong>voice</strong> query.</div>
         </div>
-        <div class="message-text">Hello! Ask any medical question, share symptoms, upload an image for visual observation, or use the voice recorder. I will cross-reference the clinical knowledge base and verified guidance while citing sources.</div>
-      </article>
+      </div>
     </section>
 
-    <!-- Image Upload Preview Bar -->
-    <div id="preview" class="image-preview-panel" hidden>
-      <div class="preview-thumbnail-wrapper">
-        <img id="thumbnail" alt="Selected medical image preview">
-      </div>
-      <div class="preview-details">
-        <span class="preview-title">Image attached for analysis</span>
-        <button id="remove" type="button" class="btn-remove">Remove image &times;</button>
+    <!-- ── Image preview ── -->
+    <div id="preview" class="preview" hidden>
+      <img id="thumbnail" alt="Attached image">
+      <div class="preview-info">
+        <span>📎 Image attached</span>
+        <button id="remove" type="button" class="link-btn">Remove ×</button>
       </div>
     </div>
 
-    <!-- Live Camera Container -->
-    <div class="camera-wrapper">
-      <video id="video" autoplay playsinline hidden></video>
-      <div id="cameraActions" class="camera-actions" hidden>
-        <button id="snap" type="button" class="btn-primary">📸 Capture Photo</button>
-        <button id="closeCamera" type="button" class="btn-secondary">Close Camera</button>
-      </div>
-      <canvas id="canvas" hidden></canvas>
+    <!-- ── Camera ── -->
+    <video id="video" autoplay playsinline hidden></video>
+    <div id="cameraActions" class="cam-bar" hidden>
+      <button id="snap" type="button" class="pill-btn pill-primary">📸 Capture</button>
+      <button id="closeCamera" type="button" class="pill-btn pill-ghost">Close</button>
     </div>
+    <canvas id="canvas" hidden></canvas>
 
-    <!-- Input Form & Interactive Toolbar -->
-    <form id="chatForm" class="chat-form">
-      <div class="input-wrapper">
-        <textarea id="message" placeholder="Describe your symptoms or ask a health question..." rows="2" required maxlength="4000"></textarea>
-      </div>
-
-      <div class="toolbar">
-        <div class="toolbar-group">
-          <label class="action btn-tool" for="image" title="Attach an image">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
-            </svg>
-            <span>Image</span>
+    <!-- ── Input ── -->
+    <form id="chatForm" class="composer">
+      <textarea id="message" rows="1" placeholder="Describe symptoms or ask a question…" required maxlength="4000"></textarea>
+      <div class="composer-bar">
+        <div class="tools">
+          <label class="tool-btn" for="image" title="Attach image">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
           </label>
           <input id="image" type="file" accept="image/png,image/jpeg,image/webp" hidden>
-
-          <button class="action btn-tool" id="camera" type="button" title="Capture from camera">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-              <circle cx="12" cy="13" r="4"/>
-            </svg>
-            <span>Camera</span>
+          <button class="tool-btn" id="camera" type="button" title="Camera">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
           </button>
-
-          <button class="action btn-tool" id="mic" type="button" title="Record voice query">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
-              <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-              <line x1="12" y1="19" x2="12" y2="23"/>
-              <line x1="8" y1="23" x2="16" y2="23"/>
-            </svg>
-            <span>Voice</span>
+          <button class="tool-btn" id="mic" type="button" title="Voice input">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="1" width="6" height="12" rx="3"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
           </button>
-
-          <button class="action btn-tool" id="listen" type="button" title="Read answer out loud">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
-              <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
-            </svg>
-            <span>Read Answer</span>
+          <button class="tool-btn" id="listen" type="button" title="Read answer aloud">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
           </button>
         </div>
-
-        <button id="send" type="submit" class="btn-send">
-          <span>Send</span>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="22" y1="2" x2="11" y2="13"/>
-            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
-          </svg>
+        <button id="send" type="submit" class="send-btn">
+          Send
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
         </button>
       </div>
     </form>
 
-    <!-- Optional API Configuration Details -->
-    <details class="api-token-accordion">
-      <summary>
-        <span>Security &amp; API Options (optional)</span>
-      </summary>
-      <div class="api-token-body">
-        <label for="token">Bearer API Token:</label>
-        <input id="token" type="password" placeholder="Enter API_TOKEN if protected in .env">
-      </div>
+    <!-- ── Footer ── -->
+    <details class="footer-details">
+      <summary>API token (optional)</summary>
+      <input id="token" type="password" placeholder="Bearer token from .env">
     </details>
   </main>
 
-  <!-- Client JavaScript Application -->
-  <script id="app-script" src="/static/app.js"></script>
-  <script>
-    if (window.location.protocol === 'file:') {
-      document.getElementById('app-script').src = '../static/app.js';
-    }
-  </script>
+  <script src="/static/app.js"></script>
 </body>
 </html>
