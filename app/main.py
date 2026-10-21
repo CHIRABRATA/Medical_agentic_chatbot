@@ -2,56 +2,110 @@ import base64
 import io
 import secrets
 from pathlib import Path
+from uuid import uuid4
+
 from fastapi import FastAPI, File, Form, Header, HTTPException, UploadFile
 from fastapi.responses import HTMLResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from openai import OpenAI
-from uuid import uuid4
+from google import genai
+from google.genai import types
+
 from app.config import settings
 from app.agent import graph
 
-ROOT=Path(__file__).resolve().parent.parent
-app=FastAPI(title='Medical Agent Educational API',version='1.0.0')
-app.add_middleware(CORSMiddleware,allow_origins=settings.allowed_origins.split(','),allow_credentials=False,allow_methods=['GET','POST'],allow_headers=['Authorization','Content-Type'])
-app.mount('/static',StaticFiles(directory=ROOT/'static'),name='static')
+ROOT = Path(__file__).resolve().parent.parent
+app = FastAPI(title='Medical Agent Educational API', version='1.0.0')
+
+allowed_origins = [origin.strip() for origin in settings.allowed_origins.split(',') if origin.strip()]
+if not allowed_origins:
+    allowed_origins = ["*"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins,
+    allow_credentials=False,
+    allow_methods=['GET', 'POST'],
+    allow_headers=['Authorization', 'Content-Type']
+)
+app.mount('/static', StaticFiles(directory=ROOT / 'static'), name='static')
 
 
 class ChatRequest(BaseModel):
-    message: str = Field(min_length=1,max_length=4000)
-    history: list[dict[str,str]] = Field(default_factory=list,max_length=10)
+    message: str = Field(min_length=1, max_length=4000)
+    history: list[dict[str, str]] = Field(default_factory=list, max_length=10)
     image_data: str | None = None
 
+
 def auth(authorization: str | None):
-    if settings.api_token and not secrets.compare_digest(authorization or '',f'Bearer {settings.api_token}'):
-        raise HTTPException(status_code=401,detail='Invalid API token')
+    if settings.api_token and not secrets.compare_digest(authorization or '', f'Bearer {settings.api_token}'):
+        raise HTTPException(status_code=401, detail='Invalid API token')
 
 
-def inspect_image(data):
+def inspect_image(data: str | None) -> str:
     if not data:
         return ''
     try:
-        header,payload=data.split(',',1)
-        mime=header.split(';')[0].split(':')[1]
-        raw=base64.b64decode(payload,validate=True)
-        if mime not in ('image/jpeg','image/png','image/webp') or len(raw)>5_000_000:
+        header, payload = data.split(',', 1)
+        mime = header.split(';')[0].split(':')[1]
+        raw = base64.b64decode(payload, validate=True)
+        if mime not in ('image/jpeg', 'image/png', 'image/webp') or len(raw) > 5_000_000:
             raise ValueError('Only JPEG/PNG/WebP under 5MB supported')
-    except (ValueError,IndexError) as exc:
-        raise HTTPException(status_code=400,detail=f'Invalid image: {exc}')
-    client=OpenAI(api_key=settings.openai_api_key,timeout=45)
-    result=client.chat.completions.create(model=settings.openai_vision_model,messages=[{'role':'user','content':[{'type':'text','text':'Describe only objectively visible medical-relevant features. Do not diagnose, estimate severity, or assert absence of illness. If image unclear, say so.'},{'type':'image_url','image_url':{'url':data}}]}],max_tokens=300)
-    return result.choices[0].message.content or ''
+    except (ValueError, IndexError) as exc:
+        raise HTTPException(status_code=400, detail=f'Invalid image: {exc}')
+
+    prompt = 'Describe only objectively visible medical-relevant features. Do not diagnose, estimate severity, or assert absence of illness. If image unclear, say so.'
+
+    # 1. Prefer Gemini for vision
+    if settings.gemini_api_key:
+        try:
+            ai = genai.Client(api_key=settings.gemini_api_key)
+            result = ai.models.generate_content(
+                model=settings.gemini_chat_model,
+                contents=[prompt, types.Part.from_bytes(data=raw, mime_type=mime)]
+            )
+            return result.text or ''
+        except Exception as e:
+            print(f"Gemini image inspection error: {e}", flush=True)
+
+    # 2. Fallback to OpenAI vision if configured
+    if settings.openai_api_key:
+        try:
+            client = OpenAI(api_key=settings.openai_api_key, timeout=45)
+            result = client.chat.completions.create(
+                model=settings.openai_vision_model,
+                messages=[{
+                    'role': 'user',
+                    'content': [
+                        {'type': 'text', 'text': prompt},
+                        {'type': 'image_url', 'image_url': {'url': data}}
+                    ]
+                }],
+                max_tokens=300
+            )
+            return result.choices[0].message.content or ''
+        except Exception as e:
+            print(f"OpenAI image inspection error: {e}", flush=True)
+
+    return ''
 
 
-@app.get('/',response_class=HTMLResponse)
+@app.get('/', response_class=HTMLResponse)
 def home():
-    return (ROOT/'templates'/'index.html').read_text(encoding='utf-8')
+    return (ROOT / 'templates' / 'index.html').read_text(encoding='utf-8')
+
 
 @app.get('/api/health')
 def health():
-    return {'status':'ok','configured':bool(settings.openai_api_key and settings.pinecone_api_key),'tavily':bool(settings.tavily_api_key)}
-
+    ai_configured = bool(settings.gemini_api_key or settings.openai_api_key)
+    return {
+        'status': 'ok',
+        'configured': bool(ai_configured and settings.pinecone_api_key),
+        'tavily': bool(settings.tavily_api_key),
+        'provider': 'gemini' if settings.gemini_api_key else ('openai' if settings.openai_api_key else 'none')
+    }
 
 
 @app.post('/api/chat')
@@ -62,66 +116,94 @@ def chat(
 ):
     auth(authorization)
 
-    if not settings.openai_api_key or not settings.pinecone_api_key:
-        raise HTTPException(503,'Set OPENAI_API_KEY and PINECONE_API_KEY in .env')
+    if not (settings.gemini_api_key or settings.openai_api_key) or not settings.pinecone_api_key:
+        raise HTTPException(503, 'Set GEMINI_API_KEY (or OPENAI_API_KEY) and PINECONE_API_KEY in .env')
 
-    history=[x for x in payload.history if x.get('role') in ('user','assistant') and isinstance(x.get('content'),str)][:10]
+    history = [x for x in payload.history if x.get('role') in ('user', 'assistant') and isinstance(x.get('content'), str)][:10]
 
     # SQLite persistent memory: reuse the same conversation thread
     thread_id = conversation_id or str(uuid4())
     config = {"configurable": {"thread_id": thread_id}}
 
     try:
-        observation=inspect_image(payload.image_data)
+        observation = inspect_image(payload.image_data)
 
-        state=graph.invoke(
+        state = graph.invoke(
             {
-                'question':payload.message,
-                'history':history,
-                'image_description':observation,
-                'kb':[],
-                'web':[],
-                'answer':'',
-                'route':''
+                'question': payload.message,
+                'history': history,
+                'image_description': observation,
+                'kb': [],
+                'web': [],
+                'answer': '',
+                'route': ''
             },
             config=config
         )
 
         return {
-            'answer':state['answer'],
-            'sources': [{'type':'pdf','page':x['page'],'score':x['score']} for x in state['kb']]+[{'type':'web','url':x['url'],'title':x['title']} for x in state['web']],
-            'tools': ['pinecone']+(['tavily'] if state['route']=='web' and settings.tavily_api_key else [])+(['vision'] if observation else []),
-            'conversation_id':thread_id
+            'answer': state.get('answer', ''),
+            'sources': [{'type': 'pdf', 'page': x.get('page'), 'score': round(x.get('score', 0.0), 3)} for x in state.get('kb', [])] + [{'type': 'web', 'url': x.get('url'), 'title': x.get('title')} for x in state.get('web', [])],
+            'tools': ['pinecone'] + (['tavily'] if state.get('route') == 'web' and settings.tavily_api_key else []) + (['vision'] if observation else []),
+            'conversation_id': thread_id
         }
 
     except HTTPException:
         raise
     except Exception as exc:
-        print('Chat error:',repr(exc),flush=True)
-        raise HTTPException(502,'AI service failed. Check server logs, credentials, Pinecone index, and connectivity.')
+        print('Chat error:', repr(exc), flush=True)
+        raise HTTPException(502, f'AI service failed: {exc}')
 
 
 @app.post('/api/transcribe')
-async def transcribe(file:UploadFile=File(...),authorization:str|None=Header(default=None)):
+async def transcribe(file: UploadFile = File(...), authorization: str | None = Header(default=None)):
     auth(authorization)
-    data=await file.read(10_000_001)
-    if len(data)>10_000_000:
-        raise HTTPException(413,'Audio exceeds 10 MB')
-    audio=io.BytesIO(data); audio.name='voice.webm'
-    try:
-        result=OpenAI(api_key=settings.openai_api_key).audio.transcriptions.create(model='whisper-1',file=audio)
-        return {'text':result.text}
-    except Exception:
-        raise HTTPException(502,'Speech transcription unavailable')
+    data = await file.read(10_000_001)
+    if len(data) > 10_000_000:
+        raise HTTPException(413, 'Audio exceeds 10 MB')
+
+    # 1. Prefer Gemini audio transcription
+    if settings.gemini_api_key:
+        try:
+            ai = genai.Client(api_key=settings.gemini_api_key)
+            mime = file.content_type or 'audio/webm'
+            res = ai.models.generate_content(
+                model=settings.gemini_chat_model,
+                contents=[
+                    'Please transcribe the spoken words in this audio into accurate text. Output ONLY the transcription.',
+                    types.Part.from_bytes(data=data, mime_type=mime)
+                ]
+            )
+            return {'text': (res.text or '').strip()}
+        except Exception as exc:
+            print("Gemini transcription error:", exc, flush=True)
+
+    # 2. Fallback to OpenAI Whisper
+    if settings.openai_api_key:
+        audio = io.BytesIO(data)
+        audio.name = 'voice.webm'
+        try:
+            result = OpenAI(api_key=settings.openai_api_key).audio.transcriptions.create(model='whisper-1', file=audio)
+            return {'text': result.text}
+        except Exception as exc:
+            print("OpenAI transcription error:", exc, flush=True)
+
+    raise HTTPException(502, 'Speech transcription unavailable')
+
 
 @app.post('/api/speak')
-def speak(payload:dict,authorization:str|None=Header(default=None)):
+def speak(payload: dict, authorization: str | None = Header(default=None)):
     auth(authorization)
-    text=str(payload.get('text',''))[:3000]
+    text = str(payload.get('text', ''))[:3000]
     if not text:
-        raise HTTPException(400,'Missing text')
-    try:
-        speech=OpenAI(api_key=settings.openai_api_key).audio.speech.create(model='tts-1',voice='alloy',input=text)
-        return Response(content=speech.content,media_type='audio/mpeg')
-    except Exception:
-        raise HTTPException(502,'Speech synthesis unavailable')
+        raise HTTPException(400, 'Missing text')
+
+    # OpenAI TTS if key available
+    if settings.openai_api_key:
+        try:
+            speech = OpenAI(api_key=settings.openai_api_key).audio.speech.create(model='tts-1', voice='alloy', input=text)
+            return Response(content=speech.content, media_type='audio/mpeg')
+        except Exception as exc:
+            print("OpenAI TTS error:", exc, flush=True)
+
+    raise HTTPException(501, 'Backend TTS not configured; please use browser speech synthesis')
