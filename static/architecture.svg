@@ -1,0 +1,186 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 620" width="100%" height="100%" style="background:#0b1120; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <defs>
+    <!-- Gradients -->
+    <linearGradient id="grad-user" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#2563eb" />
+    </linearGradient>
+    <linearGradient id="grad-agent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#818cf8" />
+      <stop offset="100%" stop-color="#4f46e5" />
+    </linearGradient>
+    <linearGradient id="grad-pinecone" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34d399" />
+      <stop offset="100%" stop-color="#059669" />
+    </linearGradient>
+    <linearGradient id="grad-tavily" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24" />
+      <stop offset="100%" stop-color="#d97706" />
+    </linearGradient>
+    <linearGradient id="grad-llm" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f472b6" />
+      <stop offset="100%" stop-color="#db2777" />
+    </linearGradient>
+    <linearGradient id="grad-db" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#a78bfa" />
+      <stop offset="100%" stop-color="#7c3aed" />
+    </linearGradient>
+
+    <!-- Filter for subtle drop shadow -->
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#000" flood-opacity="0.35" />
+    </filter>
+
+    <!-- Arrow marker -->
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 9 5 L 0 9 z" fill="#64748b" />
+    </marker>
+    <marker id="arrow-active" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 9 5 L 0 9 z" fill="#38bdf8" />
+    </marker>
+    <marker id="arrow-amber" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 9 5 L 0 9 z" fill="#fbbf24" />
+    </marker>
+    <marker id="arrow-green" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 9 5 L 0 9 z" fill="#34d399" />
+    </marker>
+  </defs>
+
+  <!-- Background decorative elements -->
+  <circle cx="150" cy="120" r="140" fill="#1e3a8a" opacity="0.12" filter="blur(50px)" />
+  <circle cx="850" cy="480" r="160" fill="#6d28d9" opacity="0.12" filter="blur(60px)" />
+
+  <!-- Grid / Board Outline -->
+  <rect x="25" y="25" width="950" height="570" rx="16" fill="#131d33" stroke="#1e293b" stroke-width="1.5" />
+
+  <!-- Header Section -->
+  <text x="60" y="65" fill="#f8fafc" font-size="20" font-weight="700">MedGuide AI System Architecture</text>
+  <text x="60" y="88" fill="#94a3b8" font-size="13">LangGraph Orchestrated Agentic RAG with Multimodal Vision, Pinecone, and Tavily Clinical Search</text>
+
+  <!-- 1. Client / Interface Layer -->
+  <g transform="translate(60, 130)">
+    <rect width="210" height="420" rx="12" fill="#18233c" stroke="#253554" stroke-width="1.5" filter="url(#shadow)" />
+    <rect x="15" y="15" width="180" height="34" rx="6" fill="#1e293b" />
+    <text x="25" y="38" fill="#38bdf8" font-size="13" font-weight="700">Client / Web Frontend</text>
+
+    <!-- Inputs -->
+    <rect x="18" y="70" width="174" height="60" rx="8" fill="#0f172a" stroke="#334155" stroke-width="1" />
+    <text x="32" y="94" fill="#f1f5f9" font-size="12" font-weight="600">💬 Text Symptom Query</text>
+    <text x="32" y="114" fill="#64748b" font-size="11">Natural language input</text>
+
+    <rect x="18" y="145" width="174" height="60" rx="8" fill="#0f172a" stroke="#334155" stroke-width="1" />
+    <text x="32" y="169" fill="#f1f5f9" font-size="12" font-weight="600">📷 Image / Camera</text>
+    <text x="32" y="189" fill="#64748b" font-size="11">Skin lesion, report, rash</text>
+
+    <rect x="18" y="220" width="174" height="60" rx="8" fill="#0f172a" stroke="#334155" stroke-width="1" />
+    <text x="32" y="244" fill="#f1f5f9" font-size="12" font-weight="600">🎙️ Voice Input (Audio)</text>
+    <text x="32" y="264" fill="#64748b" font-size="11">WebM recorded query</text>
+
+    <!-- Output preview -->
+    <rect x="18" y="300" width="174" height="100" rx="8" fill="#0f172a" stroke="#334155" stroke-width="1" />
+    <text x="32" y="324" fill="#38bdf8" font-size="12" font-weight="600">Interactive UI</text>
+    <text x="32" y="344" fill="#cbd5e1" font-size="11">• Source citations ([PDF p.X])</text>
+    <text x="32" y="362" fill="#cbd5e1" font-size="11">• Emergency triage warnings</text>
+    <text x="32" y="380" fill="#cbd5e1" font-size="11">• Audio read-aloud (TTS)</text>
+  </g>
+
+  <!-- Connectors from Client to Gateway -->
+  <path d="M 270 240 L 325 240" fill="none" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrow-active)" />
+
+  <!-- 2. FastAPI Gateway -->
+  <g transform="translate(330, 130)">
+    <rect width="180" height="420" rx="12" fill="#18233c" stroke="#253554" stroke-width="1.5" filter="url(#shadow)" />
+    <rect x="15" y="15" width="150" height="34" rx="6" fill="#1e293b" />
+    <text x="25" y="38" fill="#a5b4fc" font-size="13" font-weight="700">FastAPI Gateway</text>
+
+    <rect x="15" y="70" width="150" height="50" rx="8" fill="#0f172a" stroke="#334155" stroke-width="1" />
+    <text x="24" y="93" fill="#e2e8f0" font-size="11" font-weight="600">POST /api/chat</text>
+    <text x="24" y="108" fill="#64748b" font-size="10">Orchestrator endpoint</text>
+
+    <rect x="15" y="130" width="150" height="50" rx="8" fill="#0f172a" stroke="#334155" stroke-width="1" />
+    <text x="24" y="153" fill="#e2e8f0" font-size="11" font-weight="600">Vision Inspector</text>
+    <text x="24" y="168" fill="#64748b" font-size="10">Objective triage vision</text>
+
+    <rect x="15" y="190" width="150" height="50" rx="8" fill="#0f172a" stroke="#334155" stroke-width="1" />
+    <text x="24" y="213" fill="#e2e8f0" font-size="11" font-weight="600">POST /api/transcribe</text>
+    <text x="24" y="228" fill="#64748b" font-size="10">Gemini / Whisper Speech</text>
+
+    <rect x="15" y="250" width="150" height="50" rx="8" fill="#0f172a" stroke="#334155" stroke-width="1" />
+    <text x="24" y="273" fill="#e2e8f0" font-size="11" font-weight="600">POST /api/speak</text>
+    <text x="24" y="288" fill="#64748b" font-size="10">Text-to-speech audio</text>
+
+    <rect x="15" y="320" width="150" height="80" rx="8" fill="#1e1b4b" stroke="#4338ca" stroke-width="1" />
+    <text x="24" y="342" fill="#a78bfa" font-size="11" font-weight="700">💾 SqliteSaver</text>
+    <text x="24" y="360" fill="#cbd5e1" font-size="10">medical_memory.db</text>
+    <text x="24" y="378" fill="#94a3b8" font-size="10">Session thread state</text>
+  </g>
+
+  <!-- Connectors from Gateway to LangGraph -->
+  <path d="M 510 240 L 565 240" fill="none" stroke="#818cf8" stroke-width="2" marker-end="url(#arrow)" />
+
+  <!-- 3. LangGraph Workflow Agent -->
+  <g transform="translate(570, 130)">
+    <rect width="365" height="420" rx="12" fill="#18233c" stroke="#3730a3" stroke-width="1.5" filter="url(#shadow)" />
+    <rect x="18" y="15" width="329" height="34" rx="6" fill="#1e1b4b" />
+    <text x="30" y="38" fill="#c7d2fe" font-size="13" font-weight="700">LangGraph Agentic StateGraph</text>
+
+    <!-- Node 1: Retrieve -->
+    <rect x="20" y="65" width="145" height="70" rx="8" fill="#0f172a" stroke="#34d399" stroke-width="1.2" />
+    <text x="30" y="88" fill="#34d399" font-size="12" font-weight="700">1. Retrieve (KB)</text>
+    <text x="30" y="106" fill="#94a3b8" font-size="10">Embed query &amp; search</text>
+    <text x="30" y="122" fill="#94a3b8" font-size="10">Pinecone top-k matches</text>
+
+    <!-- Node 2: Route Evaluator -->
+    <rect x="195" y="65" width="150" height="70" rx="8" fill="#0f172a" stroke="#818cf8" stroke-width="1.2" />
+    <text x="205" y="88" fill="#a5b4fc" font-size="12" font-weight="700">2. Route Decider</text>
+    <text x="205" y="106" fill="#94a3b8" font-size="10">Score &lt; 0.62 OR</text>
+    <text x="205" y="122" fill="#94a3b8" font-size="10">fresh guidance needed?</text>
+
+    <!-- Node 3: Tavily Web Search -->
+    <rect x="195" y="175" width="150" height="70" rx="8" fill="#0f172a" stroke="#fbbf24" stroke-width="1.2" />
+    <text x="205" y="198" fill="#fbbf24" font-size="12" font-weight="700">3. Web Search</text>
+    <text x="205" y="216" fill="#94a3b8" font-size="10">Tavily Clinical Search</text>
+    <text x="205" y="232" fill="#94a3b8" font-size="10">Current medical guidelines</text>
+
+    <!-- Node 4: LLM Synthesis / Answer -->
+    <rect x="20" y="275" width="325" height="120" rx="8" fill="#0f172a" stroke="#ec4899" stroke-width="1.2" />
+    <text x="32" y="300" fill="#f472b6" font-size="13" font-weight="700">4. Clinical Synthesis &amp; Safety Guardrails</text>
+    <text x="32" y="322" fill="#cbd5e1" font-size="11">• Model: Gemini 2.5 Flash / GPT-4o-mini</text>
+    <text x="32" y="340" fill="#cbd5e1" font-size="11">• Strict non-diagnostic &amp; uncertainty rules</text>
+    <text x="32" y="358" fill="#cbd5e1" font-size="11">• Emergency symptom triage escalation</text>
+    <text x="32" y="376" fill="#cbd5e1" font-size="11">• Dual citation: [PDF p.N] + verified web links</text>
+
+    <!-- Internal Graph Edges -->
+    <!-- 1 -> 2 -->
+    <path d="M 165 100 L 190 100" fill="none" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)" />
+
+    <!-- 2 -> 3 (Branch: Needs web) -->
+    <path d="M 270 135 L 270 170" fill="none" stroke="#fbbf24" stroke-width="1.5" marker-end="url(#arrow-amber)" />
+    <text x="275" y="156" fill="#fbbf24" font-size="9" font-weight="600">score &lt; 0.62</text>
+
+    <!-- 2 -> 4 (Branch: Direct answer) -->
+    <path d="M 220 135 L 140 270" fill="none" stroke="#34d399" stroke-width="1.5" marker-end="url(#arrow-green)" stroke-dasharray="3,3" />
+    <text x="145" y="195" fill="#34d399" font-size="9" font-weight="600">KB confident</text>
+
+    <!-- 3 -> 4 -->
+    <path d="M 270 245 L 270 270" fill="none" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)" />
+  </g>
+
+  <!-- External Service Connectors at Bottom / Top -->
+  <g transform="translate(60, 560)">
+    <circle cx="10" cy="10" r="5" fill="#38bdf8" />
+    <text x="25" y="14" fill="#94a3b8" font-size="11">FastAPI Backend</text>
+
+    <circle cx="160" cy="10" r="5" fill="#34d399" />
+    <text x="175" y="14" fill="#94a3b8" font-size="11">Pinecone Vector DB (1536d)</text>
+
+    <circle cx="370" cy="10" r="5" fill="#fbbf24" />
+    <text x="385" y="14" fill="#94a3b8" font-size="11">Tavily Search API</text>
+
+    <circle cx="530" cy="10" r="5" fill="#f472b6" />
+    <text x="545" y="14" fill="#94a3b8" font-size="11">Google Gemini / OpenAI</text>
+
+    <circle cx="720" cy="10" r="5" fill="#a78bfa" />
+    <text x="735" y="14" fill="#94a3b8" font-size="11">SQLite State Checkpointer</text>
+  </g>
+</svg>
